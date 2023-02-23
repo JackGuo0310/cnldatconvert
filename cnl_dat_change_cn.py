@@ -4,12 +4,14 @@ from tkinter import filedialog
 from tkinter import messagebox
 # import chardet
 import csv
+from datetime import datetime
 
-import shutil
+# import shutil
 import time
-import os
-import icon,os,base64
+# import os
+import os, base64
 from icon import Icon
+
 
 # cnl_CHN_list = []
 # cnl_CN_list = []
@@ -106,11 +108,12 @@ def op_find_need_change_line(filename, key_name):
 def copy_file_with_date_time(src_file_path):
     filename, file_extension = os.path.splitext(src_file_path)
     dst_file_path = filename + "_" + time.strftime("%Y%m%d_%H%M%S") + file_extension
-    try:
-        shutil.copy2(src_file_path, dst_file_path)
-        return dst_file_path
-    except Exception:
-        return 'None_-999_must_No_body_use_it_be_a_filename'
+    return dst_file_path
+    # try:
+    #     shutil.copy2(src_file_path, dst_file_path)
+    #     return dst_file_path
+    # except Exception:
+    #     return 'None_-999_must_No_body_use_it_be_a_filename'
 
 
 # 更新row_index行，column_index列的值
@@ -139,6 +142,7 @@ def update_csv_cell(file_path, row_index, column_index, new_value):
         writer.writerows(data)
         # print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,'4')
 
+
 # 弹窗警告
 def alert(title, message):
     messagebox.showwarning(title, message)
@@ -159,6 +163,55 @@ def is_file_path_valid(file_path, file_extension):
     return False
 
 
+# 获取文件行数
+def get_lines1(file_path):
+    # file_path = entry2.get()
+    with open(file_path, 'r') as f:
+        # 使用CSV模块创建CSV reader对象
+        reader = csv.reader(f)
+        # 初始化行数计数器
+        num_rows = 0
+        # 逐行读取CSV文件并计数
+        for row in reader:
+            num_rows += 1
+    return num_rows
+
+# 获取文件行数，这种方式更快
+def get_lines2(file_path):
+    # file_path = entry2.get()
+    with open(file_path, 'r') as f:
+        # 初始化行数计数器
+        num_rows = 0
+        # 逐行读取CSV文件并计数
+        for row in f:
+            num_rows += 1
+    return num_rows
+
+
+# 需要一个新函数,给一个行代表的字符串, 给两个列表,更改值,返回更改后的字符串
+def update_line(line_str, chn_list, cn_list):
+    done = 0
+    line_list = line_str.strip().split('\t')
+    # print(line_list)
+    # print(chn_list)
+    # print(cn_list)
+    for channel_name in chn_list:
+        try:
+            index = line_list.index(channel_name)
+            # i=chn_list.index(channel_name)
+            line_list[index] = cn_list[chn_list.index(channel_name)]
+            done += 1
+        except Exception:
+            pass
+    str = ''
+    for sub_line_list in line_list:
+        str = str + sub_line_list + '\t'
+    str = str + '\n'
+
+    # print(str)
+    return str, done
+
+
 def main_modify_dat_file(key_name_use_to_find_location_row):
     # cnl_chn_list = []
     # cnl_cn_list = []
@@ -174,26 +227,30 @@ def main_modify_dat_file(key_name_use_to_find_location_row):
         alert('警告', '未选择正确的dat文件')
         return None
 
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'cnl文件路径{cnl_file_really}')
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'dat文件路径{dat_file_choose}')
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,'正在查找Alias对应的行数')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'cnl文件路径{cnl_file_really}')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'dat文件路径{dat_file_choose}')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '正在查找Alias对应的行数')
     row = op_find_need_change_line(dat_file_choose, key_name_use_to_find_location_row)
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'行数是{row}')
-
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'.cnl文件转化为列表')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'行数是{row}')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'获取数据总行数,可能耗时较长,请等待...')
+    time1 = datetime.now()
+    total_lines = get_lines2(dat_file_choose)
+    # total_lines = 12222
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'总共{total_lines}行')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'.cnl文件转化为列表')
     if op_cnl_to_list(cnl_file_really) is False:
         return False
     else:
         cnl_chn_list, cnl_cn_list = op_cnl_to_list(cnl_file_really)
-    done_num = 0
+    # done_num = 0
     total_num = len(cnl_chn_list)
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'列表转化完成,一共{total_num}个变量需要改名')
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,cnl_chn_list)
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,cnl_cn_list)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'列表转化完成,一共{total_num}个变量需要改名')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), cnl_chn_list)
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), cnl_cn_list)
 
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,'正在复制数据文件...')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '正在获取最终数据文件名...')
     dat_file_finally = copy_file_with_date_time(dat_file_choose)
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'最终dat文件名为{dat_file_finally}')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'最终dat文件名为{dat_file_finally}')
 
     if dat_file_finally == 'None_-999_must_No_body_use_it_be_a_filename':
         alert('警告',
@@ -201,30 +258,49 @@ def main_modify_dat_file(key_name_use_to_find_location_row):
         return None
     # print(cnl_chn_list)
     # print(cnl_cn_list)
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,'正在处理,请等待...')
-    for channel_name in cnl_chn_list:
-        column = find_cell(dat_file_finally, channel_name, row)
-        # 大于-1表示找到了
-        if column > -1:
-            done_num += 1
-            chn_index = cnl_chn_list.index(channel_name)
-            print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'正在更改第{chn_index+1}个变量')
-            update_csv_cell(dat_file_finally, row - 1, column - 1, cnl_cn_list[chn_index])
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), '开始处理,请等待...')
 
-    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'处理完成,共{total_num}个变量,完成{done_num}个变量.')
-    mess_ok('提示', f'处理完成,共{total_num}个变量,完成{done_num}个变量.')
+    # for channel_name in cnl_chn_list:
+    #     column = find_cell(dat_file_finally, channel_name, row)
+    #     # 大于-1表示找到了
+    #     if column > -1:
+    #         done_num += 1
+    #         chn_index = cnl_chn_list.index(channel_name)
+    #         print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())  ,f'正在更改第{chn_index+1}个变量')
+    #         update_csv_cell(dat_file_finally, row - 1, column - 1, cnl_cn_list[chn_index])
+    # **************************2023 02 22 更新
+    with open(dat_file_choose, 'r') as f_input, open(dat_file_finally, 'w') as f_output:
+        line_num = 1
+        for line in f_input:
+            if line_num == row:
+                # 要做的,更新line,这是个字符串
+                line, done_num = update_line(line, cnl_chn_list, cnl_cn_list)
+            line_num += 1
+            f_output.write(line)
+            yushu = line_num % 20000
+            if yushu == 0:
+                # label1.config(text=f'更新完第{line_num - 1}/{total_lines}行')
+                print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'更新完第{line_num - 1}/{total_lines}行,还剩{total_lines-line_num+1}行')
+            # print(f'更新完第{line_num-1}/{total_lines}行')
+    # **************************
+    time2 = datetime.now()
+    time_interval = (time2 - time1).total_seconds()
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()), f'更新完第{total_lines}/{total_lines}行,还剩0行')
+    print(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime()),
+          f'处理完成,共{total_num}个变量,完成{done_num}个变量,用时{time_interval}.')
+
+    mess_ok('提示', f'处理完成,共{total_num}个变量,完成{done_num}个变量,用时{time_interval}.')
 
 
 root = Tk()
 root.title("处理数据")
 
-with open('tmp.ico','wb') as tmp:
+with open('tmp.ico', 'wb') as tmp:
     tmp.write(base64.b64decode(Icon().img))
 
 root.iconbitmap('tmp.ico')
 os.remove('tmp.ico')
-root.geometry("500x300")
-
+root.geometry("1000x300")
 
 button1 = Button(root, text="选择cnl文件", width=10, height=1, command=select_file1)
 button1.place(x=50, y=50)
@@ -233,11 +309,11 @@ button2 = Button(root, text="选择dat文件", width=10, height=1, command=selec
 button2.place(x=50, y=100)
 
 entry1 = Entry(root)
-entry1.place(x=150, y=50, width=300, height=28)
+entry1.place(x=150, y=50, width=700, height=28)
 entry1.insert(0, "未选择文件，请选择文件")
 #
 entry2 = Entry(root)
-entry2.place(x=150, y=100, width=300, height=28)
+entry2.place(x=150, y=100, width=700, height=28)
 entry2.insert(0, "未选择文件，请选择文件")
 
 txt1 = Label(root, text='生成文件的路径与dat文件路径一致', width=10, height=1)
@@ -246,7 +322,12 @@ txt1.place(x=150, y=150, width=200, height=28)
 button3 = Button(root, text="一键生成", width=10, command=lambda: main_modify_dat_file('Alias'))
 button3.place(x=50, y=150)
 
+# label1 = Label(root,text='None',font=('Helvetica', 26))
+# label1 = Label(root, text='None')
+# label1.place(x=50, y=200, width=200, height=28)
+# label1.place(x=50, y=200)
+# root.after(1000,update_value)
 # button4 = Button(root, text="测试函数", width=10, command=lambda: op_cnl_to_list('C:\ADT\iTest4.1BTS\Solution.Battery_GK_keyi_ceshi_gongneng\CanNeo1_HS1.cnl'))
-# button4.place(x=50, y=200)
+# button4.place(x=50, y=250)
 
 root.mainloop()
